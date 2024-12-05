@@ -34,7 +34,6 @@ export default function RegisterForm() {
   const onSubmit = async (data: RegisterEntity) => {
     try {
       const response = await authService.register(data);
-      console.log(response);
 
       if (response.user) {
         // Attempt to sign in after successful registration

@@ -23,21 +23,18 @@ export const authOptions: AuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        // Validate input
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Email and password are required");
         }
 
         try {
-          // Use custom axios instance
           const axiosInstance = createAxiosInstance();
 
-          // Disable SSL verification for this specific request
           const agent = new https.Agent({
             rejectUnauthorized: false,
           });
 
-          // Perform login
+          // login fetch
           const loginResponse = await axiosInstance.post(
             `${process.env.NEXT_PUBLIC_BASE_URL}/auth/login`,
             {
@@ -50,17 +47,13 @@ export const authOptions: AuthOptions = {
             }
           );
 
-          // Check login response
           if (loginResponse.status !== 200) {
             throw new Error("Login failed: Invalid credentials");
           }
-
-          // Ensure access token is present
           if (!loginResponse.data?.access_token) {
             throw new Error("No access token received");
           }
 
-          // Fetch user details
           const userResponse = await axiosInstance.get(
             `${process.env.NEXT_PUBLIC_BASE_URL}/auth/me`,
             {
@@ -72,27 +65,27 @@ export const authOptions: AuthOptions = {
             }
           );
 
-          // Validate user response
           if (userResponse.status !== 200) {
             throw new Error("Failed to fetch user details");
           }
 
-          // Return user object
           return {
             id: String(userResponse.data.id),
             email: userResponse.data.email,
             name: userResponse.data.name,
             access_token: loginResponse.data.access_token,
+            active_role_id: userResponse.data.active_role_id,
+            permissions: userResponse.data.active_role.permissions.map(
+              (p: any) => p.name
+            ),
           };
         } catch (error: any) {
-          // More detailed error logging
           console.error("Authentication Error:", {
             message: error.message,
             response: error.response?.data,
             status: error.response?.status,
           });
 
-          // Throw a specific error that can be caught and displayed
           throw new Error(
             error.response?.data?.message ||
               error.message ||
@@ -104,7 +97,7 @@ export const authOptions: AuthOptions = {
   ],
 
   pages: {
-    signIn: "/login", // Custom login page
+    signIn: "/login",
   },
 
   session: {
@@ -112,10 +105,26 @@ export const authOptions: AuthOptions = {
   },
 
   callbacks: {
-    async jwt({ token, user }: { token: any; user: any; trigger?: string }) {
+    async jwt({
+      token,
+      user,
+      trigger,
+      session,
+    }: {
+      token: any;
+      user: any;
+      trigger?: string;
+      session?: any;
+    }) {
       if (user) {
         token.accessToken = user?.access_token;
         token.id = user.id;
+        token.activeRoleId = user.active_role_id;
+        token.permissions = user.permissions || [];
+      }
+      if (trigger === "update") {
+        token.activeRoleId = session.activeRoleId;
+        token.permissions = session.permissions;
       }
       return token;
     },
@@ -124,17 +133,17 @@ export const authOptions: AuthOptions = {
         session = Object.assign({}, session, {
           accessToken: token.accessToken,
           id: token.id,
+          activeRoleId: token.activeRoleId,
+          permissions: token.permissions,
         });
       }
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // Allow redirects to the dashboard only after successful authentication
       return url.startsWith(baseUrl) ? url : baseUrl;
     },
   },
 
-  // Enhanced error handling
   events: {
     async signIn(message) {
       console.log("Sign in event:", message);

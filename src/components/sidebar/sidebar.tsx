@@ -1,34 +1,87 @@
+"use client";
+
 import React from "react";
 import CollapsableItem from "./collapsable-item";
-import { BoxIcon, BrickWallIcon, HistoryIcon } from "lucide-react";
+import {
+  BoxIcon,
+  BrickWallIcon,
+  CandlestickChartIcon,
+  HandCoinsIcon,
+  HistoryIcon,
+  UserIcon,
+} from "lucide-react";
 import { usePathname } from "next/navigation";
 import SidebarItem from "./sidebar-item";
 import { useSidebarContext } from "@/context/layout-context";
+import { useSession } from "next-auth/react";
 
-const sidebarItems = [
-  {
-    name: "Transaksi",
-    link: "/transaction",
-    icon: <HistoryIcon />,
-  },
-  {
-    name: "Daftar Barang",
-    link: "/product",
-    icon: <BoxIcon />,
-  },
-  {
-    name: "Master",
-    icon: <BrickWallIcon />,
-    sub: [
-      {
-        name: "Kategori",
-        link: "/master/category",
-      },
-    ],
-  },
-];
+interface SidebarItem {
+  name: string;
+  icon?: React.ReactNode;
+  link?: string;
+  sub?: { name: string; link: string }[];
+}
 
 export default function Sidebar() {
+  let sidebarItems: SidebarItem[] = [
+    {
+      name: "Profile",
+      icon: <UserIcon />,
+      link: "/profile",
+    },
+  ];
+  const { data: session } = useSession({
+    required: true,
+  });
+  if (session?.permissions.includes("manage-products")) {
+    sidebarItems = [
+      {
+        name: "Daftar Barang",
+        link: "/product",
+        icon: <BoxIcon />,
+      },
+      {
+        name: "Master",
+        icon: <BrickWallIcon />,
+        sub: [
+          {
+            name: "Kategori",
+            link: "/master/category",
+          },
+          {
+            name: "Merk",
+            link: "/master/brand",
+          },
+        ],
+      },
+      ...sidebarItems,
+    ];
+  }
+  if (session?.permissions.includes("manage-transactions")) {
+    sidebarItems = [
+      {
+        name: "Daftar Transaksi",
+        link: "/transaction-history",
+        icon: <HistoryIcon />,
+      },
+      {
+        name: "Transaksi Per Nilai",
+        link: "/transaction-history/spend-band",
+        icon: <CandlestickChartIcon />,
+      },
+      ...sidebarItems,
+    ];
+  }
+  if (session?.permissions.includes("checkout")) {
+    sidebarItems = [
+      {
+        name: "Transaksi",
+        link: "/transaction",
+        icon: <HandCoinsIcon />,
+      },
+      ...sidebarItems,
+    ];
+  }
   const pathname = usePathname();
   const { collapsed, setCollapsed } = useSidebarContext();
 
@@ -67,7 +120,7 @@ export default function Sidebar() {
                 <SidebarItem
                   key={index}
                   name={item?.name}
-                  url={item?.link}
+                  url={item?.link || "#"}
                   icon={item?.icon}
                   isActive={pathname === item?.link}
                 />

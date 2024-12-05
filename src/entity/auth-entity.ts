@@ -18,12 +18,20 @@ export interface LoginResponse {
   expires_in: number;
 }
 
-interface Role {
+interface Permission {
   id: number;
-  role_name: string;
-  display_name: string;
+  name: string;
   created_at: string;
   updated_at: string;
+}
+
+interface Role {
+  id: number;
+  slug: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+  permissions?: Permission[];
 }
 
 export interface User {
@@ -35,13 +43,7 @@ export interface User {
   updated_at: string;
   photo: string;
   active_role_id: number;
-  active_role: {
-    id: number;
-    role_name: string;
-    display_name: string;
-    created_at: string;
-    updated_at: string;
-  };
+  active_role: Role;
   roles: Role[];
 }
 
