@@ -75,7 +75,7 @@ export const authOptions: AuthOptions = {
             name: userResponse.data.name,
             access_token: loginResponse.data.access_token,
             active_role_id: userResponse.data.active_role_id,
-            permissions: userResponse.data.active_role.permissions.map(
+            permissions: userResponse.data.active_role?.permissions?.map(
               (p: any) => p.name
             ),
           };

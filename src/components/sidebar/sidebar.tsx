@@ -101,7 +101,7 @@ export default function Sidebar() {
         }`}
       >
         <div className="flex items-center justify-between p-4">
-          <h1 className="font-bold">UD. Pursida</h1>
+          <h1 className="font-bold">Web Seller</h1>
         </div>
 
         <div className="flex flex-col overflow-y-auto mt-4">
